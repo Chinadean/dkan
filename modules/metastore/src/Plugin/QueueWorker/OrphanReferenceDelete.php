@@ -12,17 +12,17 @@ use Drupal\node\NodeStorageInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Verifies if a dataset property reference is orphaned, then unpublishes it.
+ * Verifies if a dataset property reference is orphaned, then deletes it.
  *
  * @QueueWorker(
- *   id = "orphan_reference_processor",
+ *   id = "orphan_reference_delete",
  *   title = @Translation("Task Worker: Check for orphaned property reference"),
  *   cron = {"time" = 15}
  * )
  *
  * @codeCoverageIgnore
  */
-class OrphanReferenceProcessor extends QueueWorkerBase implements ContainerFactoryPluginInterface {
+class OrphanReferenceDelete extends QueueWorkerBase implements ContainerFactoryPluginInterface {
   use LoggerTrait;
 
   /**
@@ -96,19 +96,19 @@ class OrphanReferenceProcessor extends QueueWorkerBase implements ContainerFacto
       }
     }
 
-    // Value reference uuid not found in any dataset, therefore safe to unpublish.
-    $this->unpublishReference($metadataProperty, $identifier);
+    // Value reference uuid not found in any dataset, therefore safe to delete.
+    $this->deleteReference($metadataProperty, $identifier);
   }
 
   /**
-   * Unpublish a reference.
+   * Deletes a reference.
    *
    * @param string $property_id
    *   The property id.
    * @param string $uuid
    *   The uuid.
    */
-  protected function unpublishReference(string $property_id, string $uuid) {
+  protected function deleteReference(string $property_id, string $uuid) {
     $references = $this->nodeStorage
       ->loadByProperties(
               [
@@ -117,7 +117,7 @@ class OrphanReferenceProcessor extends QueueWorkerBase implements ContainerFacto
               ]
           );
     if (FALSE !== ($reference = reset($references))) {
-      $reference->set('moderation_state', 'draft');
+      $reference->delete();
     }
   }
 
